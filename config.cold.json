@@ -1,0 +1,5 @@
+{
+    "AppEnv":"development",
+    "appPort":8000,
+    "appName":"antrian"
+}
