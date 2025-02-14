@@ -15,26 +15,31 @@ var (
 )
 
 type ColdFlat struct {
-	AppEnv  string `json:"appEnv" yaml:"appEnv"`
-	AppName string `json:"appName" yaml:"appName"`
-	AppPort uint   `json:"appPort" yaml:"appPort"`
-	// AppTimezone      string `json:"appTimezone" yaml:"appTimezone"`
+	AppEnv      string `json:"appEnv" yaml:"appEnv"`
+	AppName     string `json:"appName" yaml:"appName"`
+	AppPort     uint   `json:"appPort" yaml:"appPort"`
+	AppTimezone string `json:"appTimezone" yaml:"appTimezone"`
+	DurationJwt int    `json:"durationJwt" yaml:"durationJwt"`
+
+	GeneratePassword    string `json:"generatePassword" yaml:"generatePassword"`
+	SignaturePrivateKey string `json:"signaturePrivateKey" yaml:"signaturePrivateKey"`
+	SignaturePublicKey  string `json:"signaturePublicKey" yaml:"signaturePublicKey"`
 	// AppApiKey        string `json:"appApiKey" yaml:"appApiKey"`
 	// AppSecretKey     string `json:"appSecretKey" yaml:"appSecretKey"`
 	// AppValidationKey string `json:"appValidationKey" yaml:"appValidationKey"`
 
 	// Mysql Master
-	// DBMysqlMasterDriver                string `json:"dbMysqlMasterDriver" yaml:"dbMysqlMasterDriver"`
-	// DBMysqlMasterHost                  string `json:"dbMysqlMasterHost" yaml:"dbMysqlMasterHost"`
-	// DBMysqlMasterPort                  int    `json:"dbMysqlMasterPort" yaml:"dbMysqlMasterPort"`
-	// DBMysqlMasterDBName                string `json:"dbMysqlMasterDbName" yaml:"dbMysqlMasterDbName"`
-	// DBMysqlMasterUser                  string `json:"dbMysqlMasterUser" yaml:"dbMysqlMasterUser"`
-	// DBMysqlMasterPassword              string `json:"dbMysqlMasterPassword" yaml:"dbMysqlMasterPassword"`
-	// DBMysqlMasterSSLMode               string `json:"dbMysqlMasterSslMode" yaml:"dbMysqlMasterSslMode"`
-	// DBMysqlMasterMaxOpenConnections    int    `json:"dbMysqlMasterMaxOpenConnections" yaml:"dbMysqlMasterMaxOpenConnections"`
-	// DBMysqlMasterMaxLifeTimeConnection int    `json:"dbMysqlMasterMaxLifeTimeConnection" yaml:"dbMysqlMasterMaxLifeTimeConnection"`
-	// DBMysqlMasterMaxIdleConnections    int    `json:"dbMysqlMasterMaxIdleConnections" yaml:"dbMysqlMasterMaxIdleConnections"`
-	// DBMysqlMasterMaxIdleTimeConnection int    `json:"dbMysqlMasterMaxIdleTimeConnection" yaml:"dbMysqlMasterMaxIdleTimeConnection"`
+	DBMysqlMasterDriver                string `json:"dbMysqlMasterDriver" yaml:"dbMysqlMasterDriver"`
+	DBMysqlMasterHost                  string `json:"dbMysqlMasterHost" yaml:"dbMysqlMasterHost"`
+	DBMysqlMasterPort                  int    `json:"dbMysqlMasterPort" yaml:"dbMysqlMasterPort"`
+	DBMysqlMasterDBName                string `json:"dbMysqlMasterDbName" yaml:"dbMysqlMasterDbName"`
+	DBMysqlMasterUser                  string `json:"dbMysqlMasterUser" yaml:"dbMysqlMasterUser"`
+	DBMysqlMasterPassword              string `json:"dbMysqlMasterPassword" yaml:"dbMysqlMasterPassword"`
+	DBMysqlMasterSSLMode               string `json:"dbMysqlMasterSslMode" yaml:"dbMysqlMasterSslMode"`
+	DBMysqlMasterMaxOpenConnections    int    `json:"dbMysqlMasterMaxOpenConnections" yaml:"dbMysqlMasterMaxOpenConnections"`
+	DBMysqlMasterMaxLifeTimeConnection int    `json:"dbMysqlMasterMaxLifeTimeConnection" yaml:"dbMysqlMasterMaxLifeTimeConnection"`
+	DBMysqlMasterMaxIdleConnections    int    `json:"dbMysqlMasterMaxIdleConnections" yaml:"dbMysqlMasterMaxIdleConnections"`
+	DBMysqlMasterMaxIdleTimeConnection int    `json:"dbMysqlMasterMaxIdleTimeConnection" yaml:"dbMysqlMasterMaxIdleTimeConnection"`
 
 	// Mysql Slave
 	// DBMysqlSlaveDriver                string `json:"dbMysqlSlaveDriver" yaml:"dbMysqlSlaveDriver"`
@@ -54,17 +59,9 @@ type ColdFlat struct {
 }
 
 type HotFlat struct {
-	// AppDebug              bool    `json:"appDebug" yaml:"appDebug"`
-	// LoggerDebug           bool    `json:"loggerDebug" yaml:"loggerDebug"`
-	// SentryDebug           bool    `json:"sentryDebug" yaml:"sentryDebug"`
+	AppDebug              bool   `json:"appDebug" yaml:"appDebug"`
+	LoggerDebug           bool   `json:"loggerDebug" yaml:"loggerDebug"`
 	ShutDownDelayInSecond uint64 `json:"shutDownDelayInSecond" yaml:"shutDownDelayInSecond"`
-	// PartnerPortionId      string  `json:"partnerPortionId" yaml:"partnerPortionId"`
-	// PartnerLifePortionId  string  `json:"partnerLifePortionId" yaml:"partnerLifePortionId"`
-	// HandleRedisVehicle    bool    `json:"handleRedisVehicle" yaml:"handleRedisVehicle"`
-	// HandleRedisLife       bool    `json:"handleRedisLife" yaml:"handleRedisLife"`
-	// CarUsageBusinessRate  float64 `json:"carUsageBusinessRate" yaml:"carUsageBusinessRate"`
-	// VehicleRateAdjustment bool    `json:"vehicleRateAdjustment" yaml:"vehicleRateAdjustment"`
-	// DisableRaksa          bool    `json:"disableRaksa" yaml:"disableRaksa"`
 }
 
 func Init() {

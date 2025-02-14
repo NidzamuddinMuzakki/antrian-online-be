@@ -2,18 +2,28 @@ package middleware
 
 import (
 	common "antrian-golang/common/registry"
+	"antrian-golang/lib/security"
+	"errors"
+
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
 )
 
 type IMiddleware interface {
+	Auth() gin.HandlerFunc
 }
 
 type middleware struct {
-	common common.IRegistry
+	common   common.IRegistry
+	JwtUtils security.IJwtToken
 }
 
-func NewMiddleware(common common.IRegistry) IMiddleware {
+func NewMiddleware(common common.IRegistry, JwtUtils security.IJwtToken) IMiddleware {
 	return &middleware{
-		common: common,
+		common:   common,
+		JwtUtils: JwtUtils,
 	}
 }
 
@@ -124,54 +134,40 @@ func NewMiddleware(common common.IRegistry) IMiddleware {
 // 	}
 // // }
 
-// func (m *middleware) Auth() gin.HandlerFunc {
-// 	return func(c *gin.Context) {
-// 		ctx := c.Request.Context()
-// 		xSignatureKey := c.GetHeader("x-request-signature")
-// 		xServiceName := c.GetHeader(constant.XServiceNameHeader)
-// 		if xSignatureKey == "" && xServiceName == "" {
-// 			c.JSON(http.StatusUnauthorized, response.Unauthorised(ctx))
-// 			c.AbortWithStatus(http.StatusUnauthorized)
-// 			return
-// 		}
+func (m *middleware) Auth() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctx := c.Request.Context()
+		authT := c.GetHeader("Authorization")
+		token, err := m.JwtUtils.ExtractToken(ctx, authT)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, err)
+			c.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+		tokenString, err := m.JwtUtils.ParseToken(ctx, token)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, err)
+			c.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+		_, isOK := tokenString.Claims.(jwt.MapClaims)
+		if !isOK {
+			c.JSON(http.StatusUnauthorized, errors.New("Unable to parse claims"))
+			c.AbortWithStatus(http.StatusUnauthorized)
 
-// 		if xSignatureKey != "" || xServiceName != "" {
-// 			xOwner := config.Cold.AppName
-// 			xSecretKey := fmt.Sprintf("%sX%s", config.Cold.AppSecretKey, xServiceName)
-// 			s, err := signature.NewSignature(signature.WithAlgorithm(signature.BCrypt))
-// 			if err != nil {
-// 				c.JSON(http.StatusUnauthorized, response.Unauthorised(ctx))
-// 				c.AbortWithStatus(http.StatusUnauthorized)
-// 				return
-// 			}
+			return
+		}
 
-// 			key := fmt.Sprintf("%s:%s:%s", xServiceName, xOwner, xSecretKey)
+		typeToken := tokenString.Claims.(jwt.MapClaims)["sub"].(string)
+		if typeToken == "" {
 
-// 			verified := s.Verify(c.Request.Context(), key, xSignatureKey)
+			c.JSON(http.StatusUnauthorized, errors.New("user-id is empty"))
+			c.AbortWithStatus(http.StatusUnauthorized)
 
-// 			if !verified {
-// 				c.JSON(http.StatusUnauthorized, response.Unauthorised(ctx))
-// 				c.AbortWithStatus(http.StatusUnauthorized)
-// 				return
-// 			}
+			return
+		}
 
-// 			Roles := []string{"SYSTEM"}
-// 			role := model.UserRole{
-// 				Name: Roles[0],
-// 			}
-// 			meHeaders := model.UserDetail{
-// 				UserId: 0,
-// 				Name:   "SYSTEM",
-// 				Email:  "moladin@moladin.com",
-// 				Role:   role,
-// 			}
+		c.Request.Header.Set("user-id", typeToken)
 
-// 			if err != nil {
-// 				c.AbortWithStatusJSON(http.StatusUnauthorized, response.Unauthorised(ctx))
-// 				c.AbortWithStatus(401)
-// 				return
-// 			}
-// 			c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), constant.XUserDetail, meHeaders))
-// 		}
-// 	}
-// }
+	}
+}

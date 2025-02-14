@@ -2,10 +2,15 @@ package main
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"fmt"
 	"time"
 	_ "time/tzdata"
 
 	commonCache "antrian-golang/common/cache"
+	"antrian-golang/lib/security"
+	"antrian-golang/repository"
+	"antrian-golang/service"
 
 	// commonGCP "bitbucket.org/moladinTech/go-lib-common/client/gcp"
 
@@ -31,7 +36,7 @@ import (
 	cmdHttp "antrian-golang/cmd/http"
 
 	// Import common lib here
-	// commonDs "antrian-golang/common/data_source"
+	commonDs "antrian-golang/common/data_source"
 	"antrian-golang/common/logger"
 
 	commonPanicRecover "antrian-golang/common/middleware/gin/panic_recovery"
@@ -43,12 +48,20 @@ import (
 	commonValidator "antrian-golang/common/validator"
 
 	// Import third parties here
+
+	"github.com/golang-jwt/jwt"
 	_ "github.com/joho/godotenv/autoload"
 	_ "github.com/lib/pq"
 	_ "github.com/spf13/viper/remote"
 )
 
 func main() {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered in f", r)
+			time.Sleep(3 * time.Second)
+		}
+	}()
 	ctx := context.Background()
 
 	// Start Init //
@@ -61,8 +74,8 @@ func main() {
 	config.Init()
 	// Logger
 	logger.Init(logger.Config{
-		// AppName: config.Cold.AppName,
-		// Debug: config.Hot.AppDebug,
+		AppName: config.Cold.AppName,
+		Debug:   config.Hot.AppDebug,
 	})
 	// Validator
 	validator := commonValidator.New()
@@ -70,19 +83,19 @@ func main() {
 
 	// Database
 	// - Master
-	// master, err := commonDs.NewDB(&commonDs.Config{
-	// 	Driver:                config.Cold.DBMysqlMasterDriver,
-	// 	Host:                  config.Cold.DBMysqlMasterHost,
-	// 	Port:                  config.Cold.DBMysqlMasterPort,
-	// 	DBName:                config.Cold.DBMysqlMasterDBName,
-	// 	User:                  config.Cold.DBMysqlMasterUser,
-	// 	Password:              config.Cold.DBMysqlMasterPassword,
-	// 	SSLMode:               config.Cold.DBMysqlMasterSSLMode,
-	// 	MaxOpenConnections:    config.Cold.DBMysqlMasterMaxOpenConnections,
-	// 	MaxLifeTimeConnection: config.Cold.DBMysqlMasterMaxLifeTimeConnection,
-	// 	MaxIdleConnections:    config.Cold.DBMysqlMasterMaxIdleConnections,
-	// 	MaxIdleTimeConnection: config.Cold.DBMysqlMasterMaxIdleTimeConnection,
-	// })
+	master, err := commonDs.NewDB(&commonDs.Config{
+		Driver:                config.Cold.DBMysqlMasterDriver,
+		Host:                  config.Cold.DBMysqlMasterHost,
+		Port:                  config.Cold.DBMysqlMasterPort,
+		DBName:                config.Cold.DBMysqlMasterDBName,
+		User:                  config.Cold.DBMysqlMasterUser,
+		Password:              config.Cold.DBMysqlMasterPassword,
+		SSLMode:               config.Cold.DBMysqlMasterSSLMode,
+		MaxOpenConnections:    config.Cold.DBMysqlMasterMaxOpenConnections,
+		MaxLifeTimeConnection: config.Cold.DBMysqlMasterMaxLifeTimeConnection,
+		MaxIdleConnections:    config.Cold.DBMysqlMasterMaxIdleConnections,
+		MaxIdleTimeConnection: config.Cold.DBMysqlMasterMaxIdleTimeConnection,
+	})
 	if err != nil {
 		panic(err)
 	}
@@ -142,66 +155,50 @@ func main() {
 	// End Clients //
 
 	// Start Repositories //
-	// masterTx := commonDs.NewTransactionRunner(master)
+	masterTx := commonDs.NewTransactionRunner(master)
 	// masterUtilTx := util.NewTransactionRunner(master)
-	// repoRegistry := repository.NewRegistryRepository(
-	// 	masterTx,
-	// 	masterUtilTx,
-	// 	loadingFeeRepo,
-	// 	insuranceTypeRepo,
-	// 	carMappingRepo,
-	// 	pricingOtrCategoryRepo,
-	// 	vehicleCategoryRepo,
-	// 	insuranceOrdeVehicleRepo,
-	// 	insuranceOrdeVehicleDetailsRepo,
-	// 	packageInsuranceRepo,
-	// 	partnerRepo,
-	// 	insuranceMappingRepo,
-	// 	mappingAreaRepositoryRepo,
-	// 	vehicleGroupRepo,
-	// 	carModelRepo,
-	// 	vehicleHistoryRepo,
-	// 	packageInsuranceLifeRepo,
-	// 	tenorRepo,
-	// 	principalCategoryRepo,
-	// 	insuranceOrdeLifeRepo,
-	// 	insuranceOrdeLifeDetailRepo,
-	// 	lifeHistoryRepo,
-	// 	gcStorage,
-	// 	insuranceTypeLifeRepo,
-	// 	carTypeRepo,
-	// 	insuranceAreaRepo,
-	// )
+	tipePasionRepo := repository.NewTipePasienRepo(common, master)
+	userRepo := repository.NewUserRepo(common, master)
+
+	repoRegistry := repository.NewRegistryRepository(
+		masterTx,
+		userRepo,
+		tipePasionRepo,
+	)
 	// End Repositories //
 
 	// Map for partner portion
 
+	var privatecdsaKey *ecdsa.PrivateKey
+	if privatecdsaKey, err = jwt.ParseECPrivateKeyFromPEM([]byte(config.Cold.SignaturePrivateKey)); err != nil {
+		panic(err)
+	}
+
+	var publicecdsaKey *ecdsa.PublicKey
+	if publicecdsaKey, err = jwt.ParseECPublicKeyFromPEM([]byte(config.Cold.SignaturePublicKey)); err != nil {
+		panic(err)
+	}
+
+	sec := security.NewJwtUtils(privatecdsaKey, publicecdsaKey)
+
 	// Start Services //
 	healthService := serviceHealth.NewHealth()
-	// loadingFeeService := calculationService.NewLoadingFeeService(common, repoRegistry, actLogClientLoadingFee)
-	// internalCalculationService := calculationService.NewInternalCalculationService(common, repoRegistry, mapPartnerPortionVehicle, raksa, actLogClientRedisRestart)
-	// insuranceTypeService := configService.NewInsuraceTypeService(common, repoRegistry, actLogClientInsuranceType)
-	// packageInsuranceService := calculationService.NewPackageInsuranceService(common, repoRegistry)
-	// partnerService := partnerService.NewPartnerInsuranceService(common, partnerRepo, insuranceMappingRepo, actLogClientPartnerInsuranceMapping, repoRegistry)
-	// pricingOtrCategoryService := configService.NewPricingOtrCategoryService(common, repoRegistry, actLogClientPricingCategory)
-	// packageVehicleService := packageService.NewPackageVehicleService(common, repoRegistry, actLogPackageVehicle)
+	tipePasienServ := service.NewTipePasienService(common, repoRegistry)
+	userServ := service.NewUserService(common, repoRegistry, sec)
 
-	// callbackPolisService := callBackPolisService.NewCallbackPolisService(common, repoRegistry, apiInvoice, notifcationService)
-	// packageLifeService := packageService.NewPackageLifeService(common, repoRegistry, actLogPackageLife)
-	// internalLifeCalculationService := calculationService.NewInternalLifeCalculationService(common, repoRegistry, mapPartnerPortionLife, actLogClientRedisRestart)
-	// insuranceAreaService := configService.NewInsuraceAreaService(common, repoRegistry, actLogClientInsuranceArea)
-	// carTypeService := configService.NewCarTypeService(common, repoRegistry, actLogClientCarType)
-	// principalCategoryService := configService.NewPrincipalCategoryService(common, repoRegistry, actLogClientPrincipalCategory)
-	// securityCService := securityService.NewSignatureService(common)
-	// serviceRegistry := service.NewRegistry(
-	// 	healthService,
-	// )
+	serviceRegistry := service.NewRegistry(
+		healthService,
+		tipePasienServ,
+		userServ,
+	)
 	// End Deliveries //
 
 	// Start Deliveries //
 	healthDelivery := httpDeliveryHealth.NewHealth(common, healthService)
+	tipePasienDeliv := httpDelivery.NewTipePasienDelivery(common, serviceRegistry)
+	userDeliv := httpDelivery.NewUserDelivery(common, serviceRegistry)
 
-	registryDelivery := httpDelivery.NewRegistry(healthDelivery)
+	registryDelivery := httpDelivery.NewRegistry(healthDelivery, tipePasienDeliv, userDeliv)
 
 	// End Deliveries //
 
@@ -210,6 +207,38 @@ func main() {
 		common,
 		registryDelivery,
 	)
+	// wac, err := whatsapp.NewConn(20 * time.Second)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// ss, _ := os.Hostname()
+	// sss := os.Environ()
+	// validEnv := 0
+	// for _, sVal := range sss {
+	// 	if sVal == "nidzam=ganteng" {
+	// 		validEnv = 1
+	// 	}
+	// }
+	// if validEnv != 1 {
+	// 	fmt.Println("maaf aplikasi anda terkena copyright")
+	// 	time.Sleep(3 * time.Second)
+	// 	panic("")
+
+	// }
+	// if ss != "DESKTOP-M6S1G24" {
+	// 	panic("maaf aplikasi anda terkena copyright")
+	// }
+	// var input string
+	// fmt.Print("Enter Password: ")
+	// fmt.Scanln(&input)
+	// if input != "nidzamganteng" {
+	// 	// fmt.Println(input)
+	// 	fmt.Println("maaf aplikasi anda terkena copyright")
+	// 	time.Sleep(3 * time.Second)
+	// 	panic("")
+	// }
+
 	httpServer.Serve(ctx)
+
 	// End HTTP Server //
 }

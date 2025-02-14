@@ -1,5 +1,27 @@
 {
     "AppEnv":"development",
     "appPort":8000,
-    "appName":"antrian"
+    "appName":"antrian",
+    "appTimezone":"Asia/Jakarta",
+    "durationJwt":15,
+
+
+    "generatePassword":"HmohpneB24j4MyINtGIQ60JUryVLq1UCwiCW",
+    "signaturePrivateKey":"-----BEGIN EC PRIVATE KEY-----\nMHcCAQEEIGeFocCPRf9aLkY9skabNHi/WLd0lhEC1z2j1iSYgqwQoAoGCCqGSM49\nAwEHoUQDQgAEql1xSA24jtrW3mxp4/HYp3DNxMxWAJ3rhSwcvTbSj8zMoqFZgwtO\nG4Ai+XTYu3f8D5l8UhEgNg6Y8hN2KMe0Cg==\n-----END EC PRIVATE KEY-----",
+    "signaturePublicKey":"-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEql1xSA24jtrW3mxp4/HYp3DNxMxW\nAJ3rhSwcvTbSj8zMoqFZgwtOG4Ai+XTYu3f8D5l8UhEgNg6Y8hN2KMe0Cg==\n-----END PUBLIC KEY-----",
+
+    "dbMysqlMasterDriver":"mysql",
+    "dbMysqlMasterHost":"localhost",
+    "dbMysqlMasterPort":"3306",
+    "dbMysqlMasterDbName":"antrian_golang_db",
+    "dbMysqlMasterUser":"root",
+    "dbMysqlMasterPassword":"",
+    "dbMysqlMasterSslMode":"disable",
+    "dbMysqlMasterMaxOpenConnections":"10",
+    "dbMysqlMasterMaxLifeTimeConnection":"10",
+    "dbMysqlMasterMaxIdleConnections":"10",
+    "dbMysqlMasterMaxIdleTimeConnection":"10"
+
+
+
 }

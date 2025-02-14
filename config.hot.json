@@ -1,3 +1,5 @@
 {
-    "ShutDownDelayInSecond":2
+    "ShutDownDelayInSecond":2,
+    "appDebug":true,
+    "loggerDebug":true
 }

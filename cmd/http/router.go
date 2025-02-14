@@ -1,17 +1,22 @@
 package http
 
 import (
+	"crypto/ecdsa"
 	"net/http"
 
+	"antrian-golang/cmd/middleware"
 	commonMiddleware "antrian-golang/common/middleware/gin"
 	common "antrian-golang/common/registry"
 	commonResponse "antrian-golang/common/response"
+	"antrian-golang/config"
+	"antrian-golang/lib/security"
 
 	delivery "antrian-golang/delivery/http"
 
 	// commonSignature "bitbucket.org/moladinTech/go-lib-common/signature"
 	// sentryGin "github.com/getsentry/sentry-go/gin"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
 	// ginSwagger "github.com/swaggo/gin-swagger"
 	// swaggerFiles "github.com/swaggo/files"
 	// ginSwagger "github.com/swaggo/gin-swagger"
@@ -97,11 +102,42 @@ func (r *router) v1() {
 	// if err != nil {
 	// 	panic(err)
 	// }
+	var err error
+	common := common.NewRegistry()
 
-	// common := common.NewRegistry()
-	// middlewareImpl := middleware.NewMiddleware(common)
+	var privatecdsaKey *ecdsa.PrivateKey
+	if privatecdsaKey, err = jwt.ParseECPrivateKeyFromPEM([]byte(config.Cold.SignaturePrivateKey)); err != nil {
+		panic(err)
+	}
 
-	// v1 := r.engine.Group("/v1")
-	// v1.POST("/helper/register-signature", r.delivery.GetSignature().RegisterSignature)
-	// v1.GET("/helper/verify-signature", r.delivery.GetSignature().VerifySignature)
+	var publicecdsaKey *ecdsa.PublicKey
+	if publicecdsaKey, err = jwt.ParseECPublicKeyFromPEM([]byte(config.Cold.SignaturePublicKey)); err != nil {
+		panic(err)
+	}
+
+	sec := security.NewJwtUtils(privatecdsaKey, publicecdsaKey)
+	middlewareImpl := middleware.NewMiddleware(common, sec)
+
+	v1 := r.engine.Group("/antrian/v1")
+
+	tipePasienexternal := v1.Group("/tipe_pasien")
+	tipePasienexternal.GET("/list", r.delivery.GetTipePasienDelivery().FindAllExternal)
+	tipePasienexternal.GET("/detail/:id", r.delivery.GetTipePasienDelivery().FindByIdExternal)
+
+	//admin
+	admin := v1.Group("/admin")
+
+	user := admin.Group("/user")
+
+	user.POST("/login", r.delivery.GetUserDelivery().Login)
+
+	// tipe pasien
+	tipePasien := admin.Group("/tipe_pasien", middlewareImpl.Auth())
+	tipePasien.GET("/list", r.delivery.GetTipePasienDelivery().FindAll)
+	tipePasien.GET("/detail/:id", r.delivery.GetTipePasienDelivery().FindById)
+	tipePasien.POST("/activate", r.delivery.GetTipePasienDelivery().Activate)
+	tipePasien.POST("/deactivate", r.delivery.GetTipePasienDelivery().DeActivate)
+	tipePasien.POST("", r.delivery.GetTipePasienDelivery().InsertData)
+	tipePasien.PUT("", r.delivery.GetTipePasienDelivery().UpdateData)
+
 }
