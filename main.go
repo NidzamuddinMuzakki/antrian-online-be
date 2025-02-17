@@ -159,10 +159,16 @@ func main() {
 	// masterUtilTx := util.NewTransactionRunner(master)
 	tipePasionRepo := repository.NewTipePasienRepo(common, master)
 	userRepo := repository.NewUserRepo(common, master)
+	roleRepo := repository.NewRoleRepo(common, master)
+	loketRepo := repository.NewLoketRepo(common, master)
+	antrianRepo := repository.NewAntrianRepo(common, master)
 
 	repoRegistry := repository.NewRegistryRepository(
 		masterTx,
 		userRepo,
+		roleRepo,
+		loketRepo,
+		antrianRepo,
 		tipePasionRepo,
 	)
 	// End Repositories //
@@ -185,11 +191,17 @@ func main() {
 	healthService := serviceHealth.NewHealth()
 	tipePasienServ := service.NewTipePasienService(common, repoRegistry)
 	userServ := service.NewUserService(common, repoRegistry, sec)
+	loketServ := service.NewLoketService(common, repoRegistry)
+	antrianServ := service.NewAntrianService(common, repoRegistry)
+	roleServ := service.NewRoleService(common, repoRegistry)
 
 	serviceRegistry := service.NewRegistry(
 		healthService,
 		tipePasienServ,
 		userServ,
+		loketServ,
+		antrianServ,
+		roleServ,
 	)
 	// End Deliveries //
 
@@ -197,8 +209,11 @@ func main() {
 	healthDelivery := httpDeliveryHealth.NewHealth(common, healthService)
 	tipePasienDeliv := httpDelivery.NewTipePasienDelivery(common, serviceRegistry)
 	userDeliv := httpDelivery.NewUserDelivery(common, serviceRegistry)
+	loketDeliv := httpDelivery.NewLoketDelivery(common, serviceRegistry, sec)
+	antrianDeliv := httpDelivery.NewAntrianDelivery(common, serviceRegistry, sec)
+	roleDeliv := httpDelivery.NewRoleDelivery(common, serviceRegistry)
 
-	registryDelivery := httpDelivery.NewRegistry(healthDelivery, tipePasienDeliv, userDeliv)
+	registryDelivery := httpDelivery.NewRegistry(healthDelivery, tipePasienDeliv, userDeliv, loketDeliv, antrianDeliv, roleDeliv)
 
 	// End Deliveries //
 

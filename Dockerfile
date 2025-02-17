@@ -1,7 +1,7 @@
 FROM golang:1.23.2-alpine AS builder
 
 RUN apk update
-RUN apk add git openssh tzdata build-base python3 net-tools
+RUN apk add git openssh tzdata build-base upx net-tools
 
 # Set the default value for the ENVIRONMENT build argument
 ARG ENVIRONMENT=default
@@ -21,7 +21,7 @@ RUN go install github.com/buu700/gin@latest
 RUN GO111MODULE=auto
 RUN go mod tidy
 RUN go build main.go
-
+RUN upx -9 main
 FROM alpine:latest
 
 

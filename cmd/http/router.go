@@ -124,12 +124,40 @@ func (r *router) v1() {
 	tipePasienexternal.GET("/list", r.delivery.GetTipePasienDelivery().FindAllExternal)
 	tipePasienexternal.GET("/detail/:id", r.delivery.GetTipePasienDelivery().FindByIdExternal)
 
+	//antrian
+	antrianexternal := v1.Group("/antrian")
+	antrianexternal.GET("/list", middlewareImpl.Auth(), r.delivery.GetAntrianDelivery().FindAll)
+
+	antrianexternal.GET("/insert-antrian", r.delivery.GetAntrianDelivery().InsertData)
+
+	//loket
+	loketexternal := v1.Group("/loket")
+	loketexternal.GET("/list", r.delivery.GetLoketDelivery().FindAllExternal)
+	loketexternal.GET("/detail/:id", r.delivery.GetLoketDelivery().FindByIdExternal)
+	loketexternal.GET("/user-id", r.delivery.GetLoketDelivery().UpdateUserId)
+
 	//admin
 	admin := v1.Group("/admin")
 
 	user := admin.Group("/user")
 
 	user.POST("/login", r.delivery.GetUserDelivery().Login)
+	user.POST("/", middlewareImpl.Auth(), r.delivery.GetUserDelivery().CreateUser)
+	user.PUT("/", middlewareImpl.Auth(), r.delivery.GetUserDelivery().UpdateUser)
+	user.POST("/change-password", middlewareImpl.Auth(), r.delivery.GetUserDelivery().UpdateUserPassword)
+	user.POST("/activate", middlewareImpl.Auth(), r.delivery.GetUserDelivery().Activate)
+	user.POST("/deactivate", middlewareImpl.Auth(), r.delivery.GetUserDelivery().DeActivate)
+	user.GET("/list", middlewareImpl.Auth(), r.delivery.GetUserDelivery().FindAll)
+	user.GET("/detail/:id", middlewareImpl.Auth(), r.delivery.GetUserDelivery().FindById)
+
+	role := admin.Group("/role")
+	role.POST("/", middlewareImpl.Auth(), r.delivery.GetRoleDelivery().CreateRole)
+	role.PUT("/", middlewareImpl.Auth(), r.delivery.GetRoleDelivery().UpdateRole)
+
+	role.POST("/activate", middlewareImpl.Auth(), r.delivery.GetRoleDelivery().Activate)
+	role.POST("/deactivate", middlewareImpl.Auth(), r.delivery.GetRoleDelivery().DeActivate)
+	role.GET("/list", middlewareImpl.Auth(), r.delivery.GetRoleDelivery().FindAll)
+	role.GET("/detail/:uuid", middlewareImpl.Auth(), r.delivery.GetRoleDelivery().FindByUuid)
 
 	// tipe pasien
 	tipePasien := admin.Group("/tipe_pasien", middlewareImpl.Auth())
@@ -139,5 +167,14 @@ func (r *router) v1() {
 	tipePasien.POST("/deactivate", r.delivery.GetTipePasienDelivery().DeActivate)
 	tipePasien.POST("", r.delivery.GetTipePasienDelivery().InsertData)
 	tipePasien.PUT("", r.delivery.GetTipePasienDelivery().UpdateData)
+
+	//
+	loket := admin.Group("/loket", middlewareImpl.Auth())
+	loket.GET("/list", r.delivery.GetLoketDelivery().FindAll)
+	loket.GET("/detail/:id", r.delivery.GetLoketDelivery().FindById)
+	loket.POST("/activate", r.delivery.GetLoketDelivery().Activate)
+	loket.POST("/deactivate", r.delivery.GetLoketDelivery().DeActivate)
+	loket.POST("", r.delivery.GetLoketDelivery().InsertData)
+	loket.PUT("", r.delivery.GetLoketDelivery().UpdateData)
 
 }

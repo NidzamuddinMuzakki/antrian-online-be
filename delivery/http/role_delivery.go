@@ -11,33 +11,33 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type IUserDelivery interface {
-	Login(c *gin.Context)
-	CreateUser(c *gin.Context)
-	UpdateUser(c *gin.Context)
-	UpdateUserPassword(c *gin.Context)
+type IRoleDelivery interface {
+	CreateRole(c *gin.Context)
+	UpdateRole(c *gin.Context)
+
 	Activate(c *gin.Context)
 	DeActivate(c *gin.Context)
-	FindById(c *gin.Context)
+	FindByUuid(c *gin.Context)
 	FindAll(c *gin.Context)
 }
-type UserDelivery struct {
+type RoleDelivery struct {
 	common          common.IRegistry
 	serviceRegistry service.IRegistry
 }
 
-func NewUserDelivery(common common.IRegistry, serviceRegistry service.IRegistry) IUserDelivery {
-	return &UserDelivery{
+func NewRoleDelivery(common common.IRegistry, serviceRegistry service.IRegistry) IRoleDelivery {
+	return &RoleDelivery{
 		common:          common,
 		serviceRegistry: serviceRegistry,
 	}
 }
 
-func (h *UserDelivery) Login(c *gin.Context) {
+func (h *RoleDelivery) CreateRole(c *gin.Context) {
 	const logCtx = "delivery.http.tnc.GetTncVersion"
 	var (
-		ctx = c.Request.Context()
-		req = payload.RequestLogin{}
+		ctx    = c.Request.Context()
+		req    = payload.RequestCreateRole{}
+		userid = c.GetHeader("user-id")
 	)
 
 	err := c.ShouldBindJSON(&req)
@@ -48,6 +48,8 @@ func (h *UserDelivery) Login(c *gin.Context) {
 		})
 	}
 
+	req.UserId = userid
+
 	err = h.common.GetValidator().Struct(req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, commonModel.Response{
@@ -56,7 +58,7 @@ func (h *UserDelivery) Login(c *gin.Context) {
 		})
 		return
 	}
-	data, err := h.serviceRegistry.GetUserService().Login(ctx, req)
+	data, err := h.serviceRegistry.GetRoleService().InsertData(ctx, req)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, commonModel.Response{
 			Status:  commonModel.StatusError,
@@ -72,11 +74,11 @@ func (h *UserDelivery) Login(c *gin.Context) {
 	})
 }
 
-func (h *UserDelivery) CreateUser(c *gin.Context) {
+func (h *RoleDelivery) UpdateRole(c *gin.Context) {
 	const logCtx = "delivery.http.tnc.GetTncVersion"
 	var (
 		ctx    = c.Request.Context()
-		req    = payload.RequestCreateUser{}
+		req    = payload.RequestUpdateRole{}
 		userid = c.GetHeader("user-id")
 	)
 
@@ -98,7 +100,7 @@ func (h *UserDelivery) CreateUser(c *gin.Context) {
 		})
 		return
 	}
-	data, err := h.serviceRegistry.GetUserService().CreateUser(ctx, req)
+	err = h.serviceRegistry.GetRoleService().UpdateData(ctx, req)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, commonModel.Response{
 			Status:  commonModel.StatusError,
@@ -110,15 +112,14 @@ func (h *UserDelivery) CreateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, commonModel.Response{
 		Status:  commonModel.StatusSuccess,
 		Message: http.StatusText(http.StatusOK),
-		Data:    data,
 	})
 }
 
-func (h *UserDelivery) UpdateUser(c *gin.Context) {
+func (h *RoleDelivery) Activate(c *gin.Context) {
 	const logCtx = "delivery.http.tnc.GetTncVersion"
 	var (
 		ctx    = c.Request.Context()
-		req    = payload.RequestUpdateUser{}
+		req    = payload.RequestUpdateRoleStatus{}
 		userid = c.GetHeader("user-id")
 	)
 
@@ -140,7 +141,7 @@ func (h *UserDelivery) UpdateUser(c *gin.Context) {
 		})
 		return
 	}
-	err = h.serviceRegistry.GetUserService().UpdateData(ctx, req)
+	err = h.serviceRegistry.GetRoleService().Activate(ctx, req)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, commonModel.Response{
 			Status:  commonModel.StatusError,
@@ -155,11 +156,11 @@ func (h *UserDelivery) UpdateUser(c *gin.Context) {
 	})
 }
 
-func (h *UserDelivery) UpdateUserPassword(c *gin.Context) {
+func (h *RoleDelivery) DeActivate(c *gin.Context) {
 	const logCtx = "delivery.http.tnc.GetTncVersion"
 	var (
 		ctx    = c.Request.Context()
-		req    = payload.RequestUpdateUserPassword{}
+		req    = payload.RequestUpdateRoleStatus{}
 		userid = c.GetHeader("user-id")
 	)
 
@@ -181,7 +182,7 @@ func (h *UserDelivery) UpdateUserPassword(c *gin.Context) {
 		})
 		return
 	}
-	err = h.serviceRegistry.GetUserService().UpdateUserPassword(ctx, req)
+	err = h.serviceRegistry.GetRoleService().DeActivate(ctx, req)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, commonModel.Response{
 			Status:  commonModel.StatusError,
@@ -196,93 +197,11 @@ func (h *UserDelivery) UpdateUserPassword(c *gin.Context) {
 	})
 }
 
-func (h *UserDelivery) Activate(c *gin.Context) {
+func (h *RoleDelivery) FindByUuid(c *gin.Context) {
 	const logCtx = "delivery.http.tnc.GetTncVersion"
 	var (
 		ctx    = c.Request.Context()
-		req    = payload.RequestUpdateUserStatus{}
-		userid = c.GetHeader("user-id")
-	)
-
-	err := c.ShouldBindJSON(&req)
-	if err != nil {
-		c.JSON(http.StatusUnprocessableEntity, commonModel.Response{
-			Status:  commonModel.StatusError,
-			Message: err.Error(),
-		})
-	}
-
-	req.UserId = userid
-
-	err = h.common.GetValidator().Struct(req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, commonModel.Response{
-			Status:  commonModel.StatusError,
-			Message: err.Error(),
-		})
-		return
-	}
-	err = h.serviceRegistry.GetUserService().Activate(ctx, req)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, commonModel.Response{
-			Status:  commonModel.StatusError,
-			Message: err.Error(),
-		})
-		return
-	}
-
-	c.JSON(http.StatusOK, commonModel.Response{
-		Status:  commonModel.StatusSuccess,
-		Message: http.StatusText(http.StatusOK),
-	})
-}
-
-func (h *UserDelivery) DeActivate(c *gin.Context) {
-	const logCtx = "delivery.http.tnc.GetTncVersion"
-	var (
-		ctx    = c.Request.Context()
-		req    = payload.RequestUpdateUserStatus{}
-		userid = c.GetHeader("user-id")
-	)
-
-	err := c.ShouldBindJSON(&req)
-	if err != nil {
-		c.JSON(http.StatusUnprocessableEntity, commonModel.Response{
-			Status:  commonModel.StatusError,
-			Message: err.Error(),
-		})
-	}
-
-	req.UserId = userid
-
-	err = h.common.GetValidator().Struct(req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, commonModel.Response{
-			Status:  commonModel.StatusError,
-			Message: err.Error(),
-		})
-		return
-	}
-	err = h.serviceRegistry.GetUserService().DeActivate(ctx, req)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, commonModel.Response{
-			Status:  commonModel.StatusError,
-			Message: err.Error(),
-		})
-		return
-	}
-
-	c.JSON(http.StatusOK, commonModel.Response{
-		Status:  commonModel.StatusSuccess,
-		Message: http.StatusText(http.StatusOK),
-	})
-}
-
-func (h *UserDelivery) FindById(c *gin.Context) {
-	const logCtx = "delivery.http.tnc.GetTncVersion"
-	var (
-		ctx    = c.Request.Context()
-		req    = payload.RequestUpdateUserFindById{}
+		req    = payload.RequestRoleFindByUUID{}
 		userid = c.GetHeader("user-id")
 	)
 
@@ -304,7 +223,7 @@ func (h *UserDelivery) FindById(c *gin.Context) {
 		})
 		return
 	}
-	data, err := h.serviceRegistry.GetUserService().FindById(ctx, req)
+	data, err := h.serviceRegistry.GetRoleService().FindById(ctx, req)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, commonModel.Response{
 			Status:  commonModel.StatusError,
@@ -320,11 +239,11 @@ func (h *UserDelivery) FindById(c *gin.Context) {
 	})
 }
 
-func (h *UserDelivery) FindAll(c *gin.Context) {
+func (h *RoleDelivery) FindAll(c *gin.Context) {
 	const logCtx = "delivery.http.tnc.GetTncVersion"
 	var (
 		ctx    = c.Request.Context()
-		req    = payload.RequestGetUser{}
+		req    = payload.RequestGetRole{}
 		userid = c.GetHeader("user-id")
 	)
 
@@ -351,7 +270,7 @@ func (h *UserDelivery) FindAll(c *gin.Context) {
 		})
 		return
 	}
-	data, count, err := h.serviceRegistry.GetUserService().FindAll(ctx, req)
+	data, count, err := h.serviceRegistry.GetRoleService().FindAll(ctx, req)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, commonModel.Response{
 			Status:  commonModel.StatusError,

@@ -40,6 +40,7 @@ func (h *TipePasienDelivery) FindAll(c *gin.Context) {
 		req = payload.RequestGetTipePasien{}
 	)
 
+	c.GetHeader("user-id")
 	err := c.ShouldBindQuery(&req)
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, commonModel.Response{

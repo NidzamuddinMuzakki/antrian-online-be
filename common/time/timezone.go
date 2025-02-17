@@ -18,7 +18,7 @@ func LoadTimeZoneFromEnv() string {
 }
 
 func LoadTimeZoneAsiaJakarta() *time.Location {
-	loc, err := time.LoadLocation("Asia/Jakarta")
+	loc, err := time.LoadLocation("UTC")
 	if err != nil {
 		// we dont want this error to happen
 		//

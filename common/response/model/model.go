@@ -13,6 +13,7 @@ type Response struct {
 	Message      string `json:"message"`
 	Code         string `json:"code,omitempty"`
 	Data         any    `json:"data,omitempty"`
+	Type         string `json:"type,omitempty"`
 	RowPerpage   uint   `json:"row_perpage,omitempty"`
 	TotalRecords uint64 `json:"totalRecords,omitempty"`
 	CurrentPage  uint   `json:"currentPage,omitempty"`
